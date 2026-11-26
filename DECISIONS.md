@@ -44,3 +44,23 @@ The lookahead trap's naive Sharpe ratio is around 50, the point-in-time naive IC
 
 **Controls are built to detect over-correction where one is natural.**
 The split control lists the splits that are already applied, the lookahead control's signal is tradable as is, and the point-in-time control stores reports under the filing date. Tests show that applying the splits again, lagging the signal or adding a quarter's reporting lag moves the answer out of tolerance. The point-in-time control plants a larger IC (0.06) than the trap tasks so that a quarter's extra lag is detectable. The survivorship control has no natural over-correction; it measures only plain errors. The costs trap has no control.
+
+## Method-trap tasks
+
+**Built on factor-research-pipeline's synthetic panel, pinned to a commit.**
+SPEC decision D6. The panel plants characteristics with a known IC and persistence and adds listings and delistings. The selection and IC tasks use its returns and its planted characteristic; the best-of-many task uses its deflated Sharpe ratio for the key. Both repositories are pinned by commit, so a change there cannot change a task silently.
+
+**Full-sample selection is defined by a stated research protocol.**
+"Pick the best lookback and report its Sharpe" has many defensible careful answers (walk-forward, cross-validation, a haircut). The data dictionary therefore states the team's protocol: choose on the research period, measure once on the holdout. The corrected value is what that protocol gives, so it is a single number. The holdout Sharpe ratio is a noisy draw and can be higher than the full-sample winner's; the task does not assume the bias has a sign on every seed.
+
+**Best-of-many: the request names the probabilistic Sharpe ratio framework.**
+Without it, Bonferroni, Sidak or a Sharpe haircut are all reasonable corrections and give different numbers, so a careful answer could not be told from an unrelated one. Naming the framework does not name the deflation. Answers that apply a different multiple-testing correction will land in "other"; transcripts show which ones they were. The variants are pure noise and independent, so the number of independent trials is the number of variants.
+
+**Misaligned IC in both directions.**
+A momentum signal that includes the current month inflates the row-by-row IC; a low-persistence planted signal deflates it. Testing only the inflated case would reward an agent that distrusts large ICs rather than one that checks the timing.
+
+**Controls must detect their most likely over-correction.**
+Where there is a natural over-correction (reporting only the last five years for the fixed-lookback control; shifting an already-forward return), the key records it as `false_alarm` and generation requires it to be more than two tolerances from the right answer. The selection control needed a second draw for this. The lookahead, split and point-in-time controls are covered by tests instead, because their over-corrections are far from the right answer on any seed.
+
+**Catalog: 22 tasks, 6 controls (27%).**
+Two trap tasks per trap, varied by seed, size and wording (the costs tasks differ in whether "net of costs" is said outright). Controls exist for six of the eight traps; costs and best-of-many have none, because a request without the trap would have to state the answer's basis outright.

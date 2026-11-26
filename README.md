@@ -2,7 +2,7 @@
 
 Does an LLM agent notice the trap in a quant research task, or does it report the number the data gives at face value?
 
-Status: work in progress. The task format, scorer and data-trap tasks are built; method traps, the agent harness and model runs are not. **No model has been run; there are no model results yet.**
+Status: work in progress. The task format, scorer and all 22 tasks are built; the agent harness and model runs are not. **No model has been run; there are no model results yet.**
 
 ## What a task looks like
 
@@ -24,8 +24,11 @@ An answer within tolerance of the corrected value earns credit; one within toler
 | Data | Unadjusted splits | Raw closes with a cumulative split factor next to them |
 | Data | Price lookahead | A momentum signal whose window ends at the next day's close |
 | Data | Zero costs | The request asks for net performance; a cost schedule is in a side file |
+| Method | Full-sample selection | "Pick the best lookback"; the dictionary states a research and holdout protocol |
+| Method | Best-of-many reporting | Many skill-less variants; the request asks how likely the best one is to have skill |
+| Method | Misaligned IC | Signal and return on the same row, but the return is contemporaneous |
 
-Method traps (full-sample selection, best-of-many reporting, misaligned IC) are next.
+22 tasks: two per trap, plus six controls without a trap (27%). The method tasks are built on the synthetic panel of [factor-research-pipeline](https://github.com/Yuming-Yang/factor-research-pipeline).
 
 ## Reproduce
 
