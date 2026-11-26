@@ -11,6 +11,7 @@ from qtb.agents import NAIVE, ORACLE
 from qtb.catalog import CATALOG, TRAPS, build
 from qtb.runner import run_task
 from qtb.scorer import Outcome, score_text
+from qtb.stats import sharpe
 from qtb.task import KEY_FILE, Kind
 from qtb.traps.base import read_wide
 
@@ -122,9 +123,52 @@ def test_control_catches_an_extra_reporting_lag(tasks_by_id, tmp_path):
 
 
 def test_long_files_have_no_rows_for_unlisted_months(generated):
+    # The one documented exception: a forward return is empty when there is no next month.
     for task in generated:
         for path in task.public_dir.glob("*.csv"):
-            assert not pd.read_csv(path).isna().any().any(), f"{task.task_id}/{path.name}"
+            frame = pd.read_csv(path).drop(columns=["fwd_ret"], errors="ignore")
+            assert not frame.isna().any().any(), f"{task.task_id}/{path.name}"
+
+
+def test_control_catches_reporting_only_the_last_five_years(tasks_by_id):
+    task = tasks_by_id["selection_control"]
+    selection = TRAPS["selection"]
+    returns = read_wide(task.public_dir / "returns.csv", "ret")
+    series = selection.momentum_returns(returns, task.key.params["lookback"], 5)
+    late = sharpe(series[series.index >= selection.HOLDOUT_START], 12)
+    assert late == pytest.approx(task.key.extra["false_alarm"], abs=1e-9)
+    assert score_text(json.dumps({"sharpe": late}), task.key).outcome is Outcome.OTHER
+
+
+def test_control_catches_shifting_a_forward_return_again(tasks_by_id, tmp_path):
+    def shift_again(workdir):
+        panel = pd.read_csv(workdir / "panel.csv")
+        panel["fwd_ret"] = panel.groupby("ticker")["fwd_ret"].shift(-1)
+        panel.to_csv(workdir / "panel.csv", index=False)
+
+    task = tasks_by_id["ic_alignment_control"]
+    assert _overcorrected(task, tmp_path, shift_again) is Outcome.OTHER
+
+
+def test_catalog_size_and_control_share(generated):
+    n_control = sum(task.key.kind is Kind.CONTROL for task in generated)
+    assert 20 <= len(generated) <= 30
+    assert 0.2 <= n_control / len(generated) <= 1 / 3
+
+
+def test_both_families_are_covered(generated):
+    families = {(task.key.family, task.key.kind) for task in generated}
+    assert families == {
+        (family, kind) for family in ("data", "method") for kind in (Kind.TRAP, Kind.CONTROL)
+    }
+
+
+def test_multiple_testing_key_matches_a_separate_implementation(tasks_by_id):
+    # The key uses factor-research-pipeline's deflated Sharpe ratio; the oracle its own.
+    task = tasks_by_id["multiple_testing_1"]
+    answer = TRAPS["multiple_testing"].oracle(task.public_dir, task.key.params)
+    assert answer["prob_skill"] == pytest.approx(task.key.field("prob_skill").corrected, abs=1e-6)
+    assert task.key.field("prob_skill").naive > 0.9
 
 
 def test_survivorship_trap_hides_only_delisted_stocks(tasks_by_id):

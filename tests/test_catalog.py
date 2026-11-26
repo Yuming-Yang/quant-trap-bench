@@ -1,3 +1,4 @@
+from dataclasses import replace
 from types import SimpleNamespace
 
 import pytest
@@ -50,3 +51,24 @@ def test_generate_refuses_to_overwrite_without_force(tmp_path):
     with pytest.raises(FileExistsError):
         generate(tmp_path, specs)
     assert len(generate(tmp_path, specs, force=True)) == 1
+
+
+def test_control_is_redrawn_until_it_can_detect_its_false_alarm(monkeypatch):
+    real = spec_for("selection_control")
+    draws = []
+
+    def fake_build(task_id, seed, control, params):
+        built = real.module.build(task_id, seed, control, params)
+        draws.append(seed)
+        if len(draws) == 1:  # make the first draw's false alarm indistinguishable
+            corrected = built.key.field("sharpe").corrected
+            key = replace(built.key, extra=dict(built.key.extra) | {"false_alarm": corrected})
+            return replace(built, key=key)
+        return built
+
+    monkeypatch.setitem(catalog.TRAPS, "fake", SimpleNamespace(build=fake_build))
+    built = build(TaskSpec("fake_control", "fake", Kind.CONTROL, 11, real.params))
+    # The first draw is rejected; later real draws may be rejected on their own merits.
+    assert draws[:2] == [11, 1011]
+    assert built.key.extra["draws"] == float(len(draws))
+    assert built.key.seed == draws[-1]
