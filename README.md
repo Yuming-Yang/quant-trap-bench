@@ -2,7 +2,7 @@
 
 Does an LLM agent notice the trap in a quant research task, or does it report the number the data gives at face value?
 
-Status: work in progress. The task format, scorer, all 22 tasks and the agent harness are built. **No model has been run; there are no model results yet.** The cost estimate for the runs is in [docs/cost-estimate.md](docs/cost-estimate.md) and awaits approval.
+This repository is the benchmark: 22 tasks built from seeds, a deterministic scorer, an agent harness, and two scripted reference agents that validate every task. **No language model has been run on it**, so it reports no model results. The harness and a cost estimate for model runs ([docs/cost-estimate.md](docs/cost-estimate.md)) are included, so such a run is one command away.
 
 ## What a task looks like
 
@@ -14,6 +14,21 @@ Every task has a hidden key with two reference values, both computed when the ta
 - the **naive** value, which the analysis gives on the data taken at face value.
 
 An answer within tolerance of the corrected value earns credit; one within tolerance of the naive value is recorded as having fallen for the trap; anything else is "other". About a quarter of the tasks are controls with no trap, which measure false alarms.
+
+## A worked example: `survivorship_1`
+
+The request asks for the annualized mean return of the equal-weighted market portfolio, 2015 to 2024. The agent gets two files and a dictionary that describes them truthfully:
+
+- `returns.csv`: "the stocks listed on the market on 2024-12-31, with their history back to January 2015", i.e. today's survivors only;
+- `delisted_returns.csv`: the 85 stocks (of 200) that delisted during the period, with their delisting returns.
+
+| Answer | `ew_mean` | Outcome |
+| --- | --- | --- |
+| Average `returns.csv` only, as the file name invites | 8.20% | naive: fell for survivorship |
+| Combine both files, average whatever was listed each month | 5.18% | corrected |
+| Tolerance | ±0.40 pp | |
+
+The gap, 3.0 percentage points a year, is the survivorship bias in this sample: 7.5 tolerances wide, so no rounding or method detail can move a naive answer into the corrected band.
 
 ## Traps
 
@@ -34,9 +49,23 @@ An answer within tolerance of the corrected value earns credit; one within toler
 
 Each run copies a task's public files into a fresh temporary directory and gives the model one tool, which runs Python there. The model works for up to 30 steps and must write `answer.json` itself. Every step's text, code, tool output and token counts are saved, one JSON file per run. Two scripted agents validate the benchmark at no cost: a naive agent that runs the textbook analysis on the data as given, and an oracle that applies the reference correction. Tests and CI drive the full loop with a scripted fake model.
 
-## Results
+## Results: benchmark validation
 
-Not run. Results will report, for each model configuration, the share of trap tasks answered with the corrected value and with the naive value, control accuracy, and each by trap family.
+These come from the two scripted reference agents and cost nothing. `uv run qtb check` and `uv run qtb summarize` reproduce them; CI runs the check on every push.
+
+| Agent | Trap tasks: corrected | Trap tasks: naive | Controls correct |
+| --- | --- | --- | --- |
+| Naive (textbook analysis on the data as given) | 0 of 16 | 16 of 16 | 6 of 6 |
+| Oracle (reference correction) | 16 of 16 | 0 of 16 | 6 of 6 |
+
+What this shows:
+
+- **Every trap bites.** Taking the data at face value lands on the naive value in all 16 trap tasks, two per trap family.
+- **Every trap is fixable from the materials.** The oracle reaches the corrected value everywhere, using only the files the agent sees.
+- **Controls are not trick questions.** The naive analysis is correct on all 6 controls, so a model that "corrects" a control is raising a false alarm, not catching a subtle trap.
+- **The two values are far apart.** The corrected and naive values are separated by at least 2.8 tolerances (survivorship_2) and up to 496 (lookahead_2), so the scorer never has to guess which one an answer was aiming at.
+
+**Model results: not run**, by the author's decision. For a model, the benchmark would report the share of trap tasks answered with the corrected value and with the naive value, the false-alarm rate on controls, and each by trap family, with intervals over repeated runs. A run needs an API key and the explicit `--allow-paid` flag (see Reproduce).
 
 ## Reproduce
 
@@ -49,16 +78,23 @@ uv run qtb summarize runs/oracle
 uv run pytest
 ```
 
-Model runs need `uv sync --extra anthropic`, an API key and `--allow-paid`.
+A model run (not made here, and paid) needs `uv sync --extra anthropic`, `ANTHROPIC_API_KEY` in the environment, and `--allow-paid`; without the flag the command refuses to start. The estimate in [docs/cost-estimate.md](docs/cost-estimate.md) puts a full run (22 tasks, 4 configurations, 3 repeats) at roughly 30 to 480 USD depending on how long agents work.
 
 ## Limitations
 
 - **Synthetic traps are cleaner than real ones.** Each task has one trap, a truthful data dictionary, and a request that defines every statistic. Real data hides problems less politely.
-- **Author bias.** The tasks were written with the help of a Claude model, and the proposed runs evaluate Claude models.
+- **No model results.** The benchmark is validated, but how any model behaves on it is untested here.
+- **Author bias.** The tasks were written with the help of a Claude model. Any later run that evaluates only Claude models should say so.
 - **Small task count.** 16 trap tasks and 6 controls; per-family figures rest on a few tasks each.
 - **A numeric score cannot see reasoning.** An agent can reach the corrected value by luck or miss it through an unrelated slip. The "other" category and the transcripts are there to show how often.
 - **The harness is not a sandbox.** It isolates the task files, not the machine.
 
-## Design notes
+## Design choices
 
-See [DECISIONS.md](DECISIONS.md) and [SPEC.md](SPEC.md).
+- **A deterministic primary score.** An answer is a number compared with two reference values, so scoring needs no judge model and cannot drift. The cost is that the score cannot see reasoning; see Limitations.
+- **Truthful data dictionaries.** Every trap can be found by a careful reader of the materials. A trap that could only be guessed would test luck, not care.
+- **Controls mirror traps.** Each control uses the same data shape as a trap family without the flaw, so detecting a trap and over-correcting are measured on comparable tasks.
+- **Synthetic data with known answers.** No model can have memorized the data, and both reference values are exact. Method traps reuse the synthetic factor panel of factor-research-pipeline, whose true signal is known.
+- **A minimal harness instead of a framework.** One Python tool in a temporary directory and a step limit, because the development machine has no Docker. It isolates the task files, not the machine.
+
+More detail, including what was dropped, is in [DECISIONS.md](DECISIONS.md).
