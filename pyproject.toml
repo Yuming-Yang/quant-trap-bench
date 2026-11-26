@@ -1,0 +1,39 @@
+[project]
+name = "quant-trap-bench"
+version = "0.1.0"
+description = "A small benchmark that checks whether an LLM agent notices planted traps in quant research tasks."
+readme = "README.md"
+authors = [{ name = "Yang Yuming" }]
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.0",
+    "pandas>=2.2.1",
+]
+
+[project.scripts]
+qtb = "qtb.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.11.19,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "qtb"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "NPY"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = ["error"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+    "ruff>=0.17",
+]

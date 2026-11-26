@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Environments and secrets
+.venv/
+.env
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Generated task bundles. `qtb generate` rebuilds them from seeds, and the answer
+# keys they contain are kept out of the repository.
+tasks/
