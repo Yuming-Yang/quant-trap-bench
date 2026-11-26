@@ -68,7 +68,7 @@ Two trap tasks per trap, varied by seed, size and wording (the costs tasks diffe
 ## Harness
 
 **A minimal harness of our own, a temporary directory per run.**
-SPEC decision D2. `inspect-ai` normally sandboxes with Docker, which the development machine does not have. The harness is about 150 lines: a model interface, one Python tool, a step limit, and a JSON record per run. The temporary directory isolates the files the agent should see; it is not a sandbox. Model-written code can read other files and use the network. Two mitigations: the tool's environment is stripped so API keys are not visible, and code that mentions the key file is flagged in the record. Revisit if Docker is installed or results are published.
+SPEC decision D2. `inspect-ai` normally sandboxes with Docker, which the development machine does not have. The harness is about 500 lines with comments: a model interface, one Python tool, a step limit, and a JSON record per run. The temporary directory isolates the files the agent should see; it is not a sandbox. Model-written code can read other files and use the network. Two mitigations: the tool's environment is stripped so API keys are not visible, and code that mentions the key file is flagged in the record. Revisit if Docker is installed or results are published.
 
 **One tool, a fresh interpreter per call.**
 A persistent REPL would be closer to a notebook but makes runs depend on hidden state and complicates timeouts. Files persist between calls; the tool description says so.
