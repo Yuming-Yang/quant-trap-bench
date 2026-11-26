@@ -33,7 +33,7 @@ def make_key(**overrides) -> AnswerKey:
 
 
 def test_key_round_trips_through_json():
-    key = make_key(extra={"n_delisted": 12.0}, notes="toy")
+    key = make_key(extra={"n_delisted": 12.0}, params={"statistic": "sharpe"}, notes="toy")
     again = AnswerKey.from_json(key.to_json())
     assert again == key
     assert json.loads(key.to_json())["kind"] == "trap"

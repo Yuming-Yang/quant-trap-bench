@@ -23,6 +23,7 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -85,6 +86,10 @@ class AnswerKey:
 
     ``primary`` is the field that decides the outcome. Other fields are scored and
     recorded but do not change the credit.
+
+    ``params`` holds the parameters the request was written from (window, portfolio
+    size, which statistic). Only the scripted reference agents read them; a model under
+    test sees the request text and nothing from the key.
     """
 
     task_id: str
@@ -96,6 +101,7 @@ class AnswerKey:
     fields: tuple[AnswerField, ...]
     seed: int
     notes: str = ""
+    params: Mapping[str, Any] = field(default_factory=dict)
     extra: Mapping[str, float] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -137,6 +143,7 @@ class AnswerKey:
         data = asdict(self)
         data["kind"] = str(self.kind)
         data["family"] = str(self.family)
+        data["params"] = dict(self.params)
         data["extra"] = dict(self.extra)
         return json.dumps(data, indent=2, sort_keys=True) + "\n"
 

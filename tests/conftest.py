@@ -32,3 +32,16 @@ def control_key() -> AnswerKey:
         fields=(AnswerField("sharpe", "annualized Sharpe ratio", 0.40, None, 0.05),),
         seed=2,
     )
+
+
+@pytest.fixture(scope="session")
+def generated(tmp_path_factory):
+    """Every catalog task, generated once per test session."""
+    from qtb.catalog import generate
+
+    return generate(tmp_path_factory.mktemp("tasks"))
+
+
+@pytest.fixture(scope="session")
+def tasks_by_id(generated):
+    return {task.task_id: task for task in generated}

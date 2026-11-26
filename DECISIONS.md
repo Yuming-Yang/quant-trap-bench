@@ -21,3 +21,26 @@ Values must be JSON numbers. Strings such as `"0.12"` or `"12%"` make the answer
 
 **Tolerances are inclusive, with a relative slack of 1e-9.**
 Without the slack, a value exactly one tolerance away can fall outside because of floating-point rounding.
+
+## Data-trap tasks
+
+**Generators written for this project, ideas taken from backtest-bias-suite.**
+The traps in `backtest-bias-suite` (MIT) test a backtest engine on a few assets over a few weeks. Here the agent does the analysis itself, so the tasks need cross-sections large enough for a rank IC or an equal-weighted market return to be meaningful. The survivorship, split and lookahead tasks follow the same scenarios (T4, T5, T1 there) on new generators. Dropped: depending on that package, which would have tied the task data to its engine-oriented `Scenario` type.
+
+**Keys come from the generators' arrays; the reference agents read the CSV files.**
+The key and the oracle are two implementations of the same analysis on two representations of the data. The validity test requires them to agree to 1% of a tolerance, which catches a dictionary that does not say what the generator did, or a file that does not hold what the key assumed. Dropped: computing the key by running the oracle, which would make "the oracle scores full marks" true by construction.
+
+**Requests define every statistic.**
+Each request says how to annualize, which standard deviation to use, whether to subtract a risk-free rate and which dates to use. A careful answer should then differ from a naive one only because of the trap. This makes the tasks easier than real research requests, which is acceptable: the benchmark measures whether the trap is noticed, not whether conventions are guessed.
+
+**Each trap is planted in a file, and the dictionary says so.**
+SPEC decision D4. The survivorship file is a current-constituents snapshot with the delisted stocks in an archive file; the fundamentals carry a period end and a filing date; the raw closes come with a split factor; the signal's window is described; the cost schedule is in a side file. A request never names the problem. A test checks that no public text uses words such as "survivorship", "lookahead", "bias" or "trap".
+
+**Seed fallback instead of tuning each draw.**
+If the trap does not move the answer by more than two tolerances for a seed, generation moves to the next seed in a fixed sequence and records how many draws it took. With the current parameters every task is accepted on its first draw. Dropped: editing parameters per task until it passes, which hides the selection.
+
+**Planted effects are strong enough to give clear answers.**
+The lookahead trap's naive Sharpe ratio is around 50, the point-in-time naive IC around 0.14. A careful agent may notice that such a number is implausible, which is part of what is being measured. Weaker effects would make the corrected and naive values closer than two tolerances on many seeds.
+
+**Controls are built to detect over-correction where one is natural.**
+The split control lists the splits that are already applied, the lookahead control's signal is tradable as is, and the point-in-time control stores reports under the filing date. Tests show that applying the splits again, lagging the signal or adding a quarter's reporting lag moves the answer out of tolerance. The point-in-time control plants a larger IC (0.06) than the trap tasks so that a quarter's extra lag is detectable. The survivorship control has no natural over-correction; it measures only plain errors. The costs trap has no control.
