@@ -2,7 +2,7 @@
 
 Does an LLM agent notice the trap in a quant research task, or does it report the number the data gives at face value?
 
-Status: work in progress. The task format, scorer and all 22 tasks are built; the agent harness and model runs are not. **No model has been run; there are no model results yet.**
+Status: work in progress. The task format, scorer, all 22 tasks and the agent harness are built. **No model has been run; there are no model results yet.** The cost estimate for the runs is in [docs/cost-estimate.md](docs/cost-estimate.md) and awaits approval.
 
 ## What a task looks like
 
@@ -30,14 +30,34 @@ An answer within tolerance of the corrected value earns credit; one within toler
 
 22 tasks: two per trap, plus six controls without a trap (27%). The method tasks are built on the synthetic panel of [factor-research-pipeline](https://github.com/Yuming-Yang/factor-research-pipeline).
 
+## Harness
+
+Each run copies a task's public files into a fresh temporary directory and gives the model one tool, which runs Python there. The model works for up to 30 steps and must write `answer.json` itself. Every step's text, code, tool output and token counts are saved, one JSON file per run. Two scripted agents validate the benchmark at no cost: a naive agent that runs the textbook analysis on the data as given, and an oracle that applies the reference correction. Tests and CI drive the full loop with a scripted fake model.
+
+## Results
+
+Not run. Results will report, for each model configuration, the share of trap tasks answered with the corrected value and with the naive value, control accuracy, and each by trap family.
+
 ## Reproduce
 
 ```bash
 uv sync
 uv run qtb generate --out tasks   # build every task from its seed
 uv run qtb check --tasks tasks    # naive agent falls for every trap, oracle scores full marks
+uv run qtb run --agent oracle --tasks tasks --out runs
+uv run qtb summarize runs/oracle
 uv run pytest
 ```
+
+Model runs need `uv sync --extra anthropic`, an API key and `--allow-paid`.
+
+## Limitations
+
+- **Synthetic traps are cleaner than real ones.** Each task has one trap, a truthful data dictionary, and a request that defines every statistic. Real data hides problems less politely.
+- **Author bias.** The tasks were written with the help of a Claude model, and the proposed runs evaluate Claude models.
+- **Small task count.** 16 trap tasks and 6 controls; per-family figures rest on a few tasks each.
+- **A numeric score cannot see reasoning.** An agent can reach the corrected value by luck or miss it through an unrelated slip. The "other" category and the transcripts are there to show how often.
+- **The harness is not a sandbox.** It isolates the task files, not the machine.
 
 ## Design notes
 

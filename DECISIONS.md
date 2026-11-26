@@ -64,3 +64,35 @@ Where there is a natural over-correction (reporting only the last five years for
 
 **Catalog: 22 tasks, 6 controls (27%).**
 Two trap tasks per trap, varied by seed, size and wording (the costs tasks differ in whether "net of costs" is said outright). Controls exist for six of the eight traps; costs and best-of-many have none, because a request without the trap would have to state the answer's basis outright.
+
+## Harness
+
+**A minimal harness of our own, a temporary directory per run.**
+SPEC decision D2. `inspect-ai` normally sandboxes with Docker, which the development machine does not have. The harness is about 500 lines with comments: a model interface, one Python tool, a step limit, and a JSON record per run. The temporary directory isolates the files the agent should see; it is not a sandbox. Model-written code can read other files and use the network. Two mitigations: the tool's environment is stripped so API keys are not visible, and code that mentions the key file is flagged in the record. Revisit if Docker is installed or results are published.
+
+**One tool, a fresh interpreter per call.**
+A persistent REPL would be closer to a notebook but makes runs depend on hidden state and complicates timeouts. Files persist between calls; the tool description says so.
+
+**The harness never writes the answer.**
+If the model stops without writing `answer.json`, the run scores "missing". Parsing a number out of the final text would reward answers the model did not commit to.
+
+**Step limit of 30 model responses.**
+High enough for an analysis with a few false starts; low enough to bound the cost of a run that loops. Runs that hit it are recorded as such.
+
+**No server-side fallback on refusals.**
+The API can rerun a refused request on another model. For a benchmark that would mix models within one configuration, so refusals are recorded as refusals.
+
+**Effort is part of a configuration.**
+Thinking cannot be turned off on current Opus and Sonnet models, so effort is the control. Configurations are named `model@effort+prompt`.
+
+**Two prompts: plain and review.**
+The review prompt asks the model to check its analysis for anything a careful senior researcher would object to. It names no trap. Comparing it with the plain prompt on the same model measures how much a generic nudge helps.
+
+**Messages use the Messages API block format internally.**
+It is the only provider wired up. Another provider's adapter would translate to and from it.
+
+**Runs are never overwritten.**
+Each run is its own file under `runs/<configuration>/<task>/run-<k>.json`. Re-running needs a new output directory or a new repeat number, so a result cannot be replaced quietly.
+
+**Paid runs need an explicit flag.**
+`qtb run --agent claude` refuses to start without `--allow-paid`. The cost estimate is in `docs/cost-estimate.md`; nothing has been run.
