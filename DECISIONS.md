@@ -96,3 +96,8 @@ Each run is its own file under `runs/<configuration>/<task>/run-<k>.json`. Re-ru
 
 **Paid runs need an explicit flag.**
 `qtb run --agent claude` refuses to start without `--allow-paid`. The cost estimate is in `docs/cost-estimate.md`; nothing has been run.
+
+## Scope
+
+**No paid model runs (author's decision, 2026-11-26).**
+The project ends as a benchmark with its validation, not as a study of models. The reference agents show that every task separates the careful answer from the naive one; what models do on it is left open. The adapter, `--allow-paid` guard and cost estimate remain, so the run is one command away for anyone who funds it. Dropped with it: model results, model false-alarm rates and the judged secondary score.
