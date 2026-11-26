@@ -21,3 +21,7 @@ jobs:
         run: uv run ruff format --check .
       - name: Test
         run: uv run pytest
+      - name: Generate the tasks and validate them with the reference agents
+        run: |
+          uv run qtb generate --out tasks
+          uv run qtb check --tasks tasks
