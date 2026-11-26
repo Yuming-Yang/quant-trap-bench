@@ -14,6 +14,11 @@ dependencies = [
 [project.scripts]
 qtb = "qtb.cli:main"
 
+[project.optional-dependencies]
+anthropic = [
+    "anthropic>=2.14.0",
+]
+
 [build-system]
 requires = ["uv_build>=0.11.19,<0.12.0"]
 build-backend = "uv_build"
