@@ -73,16 +73,20 @@ For each model configuration: the share of trap tasks answered with the correcte
 
 ## Acceptance criteria
 
-- [ ] 20 to 30 tasks, about a quarter of them controls, generated from seeds by one command.
-- [ ] Every task's corrected and naive values are computed by reference code, and the two differ by more than twice the tolerance.
-- [ ] The naive agent scores zero on all trap tasks and full marks on all controls; the oracle scores full marks on all tasks. Both run in CI.
-- [ ] The scorer has unit tests for each outcome: corrected, naive, other, malformed answer, missing answer.
-- [ ] Results for at least three model or harness configurations, each with repeated runs.
-- [ ] The false-alarm rate on controls is reported next to the detection rate.
-- [ ] The secondary, judged score is validated on a hand-labelled sample, and its agreement rate is reported.
-- [ ] Every number in the README comes from saved transcripts in the repository or from one documented command.
-- [ ] README: one-sentence problem, a worked example task, results with numbers, design trade-offs, Limitations.
-- [ ] `uv run pytest` and ruff pass in CI with no paid API calls.
+- [x] 20 to 30 tasks, about a quarter of them controls, generated from seeds by one command.
+- [x] Every task's corrected and naive values are computed by reference code, and the two differ by more than twice the tolerance.
+- [x] The naive agent scores zero on all trap tasks and full marks on all controls; the oracle scores full marks on all tasks. Both run in CI.
+- [x] The scorer has unit tests for each outcome: corrected, naive, other, malformed answer, missing answer.
+- [ ] Results for at least three model or harness configurations, each with repeated runs. *Dropped by the author's decision (no paid runs).*
+- [ ] The false-alarm rate on controls is reported next to the detection rate. *Reported for the two reference agents only; model rates dropped with the model runs.*
+- [ ] The secondary, judged score is validated on a hand-labelled sample, and its agreement rate is reported. *Dropped: it needs model runs and a paid judge.*
+- [x] Every number in the README comes from saved transcripts in the repository or from one documented command.
+- [x] README: one-sentence problem, a worked example task, results with numbers, design trade-offs, Limitations. *Results are the reference agents' validation, not model results.*
+- [x] `uv run pytest` and ruff pass in CI with no paid API calls.
+
+## Scope change (2026-11-26, author's decision)
+
+The author decided not to make any paid model calls. The project is finished as a benchmark that can be inspected and run, without model results. Milestone 5 (model runs) is dropped. Milestone 6 reports the reference agents' results, which cost nothing and validate the benchmark. The harness, the Claude adapter and the cost estimate stay in the repository, so a run can be made later by anyone who chooses to pay for it.
 
 ## Milestones
 
