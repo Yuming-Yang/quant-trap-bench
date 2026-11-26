@@ -3,8 +3,9 @@
 Each entry names a trap module, a base seed and the request parameters. Generation tries
 the base seed first. If the trap does not move the answer by more than two tolerances
 for that draw (the key refuses such a task), it tries the next seed in a fixed sequence
-and records how many draws it took. The sequence is fixed, so the same catalog always
-gives the same tasks.
+and records how many draws it took. A control that records a likely over-correction
+(``false_alarm`` in the key) is held to the same rule against that value. The sequence
+is fixed, so the same catalog always gives the same tasks.
 """
 
 from __future__ import annotations
@@ -16,11 +17,30 @@ from types import ModuleType
 from typing import Any
 
 from qtb.task import Kind, Task, TaskError, write_task
-from qtb.traps import costs, lookahead, point_in_time, splits, survivorship
+from qtb.traps import (
+    costs,
+    ic_alignment,
+    lookahead,
+    multiple_testing,
+    point_in_time,
+    selection,
+    splits,
+    survivorship,
+)
 from qtb.traps.base import Built
 
 TRAPS: dict[str, ModuleType] = {
-    module.TRAP: module for module in (survivorship, point_in_time, splits, lookahead, costs)
+    module.TRAP: module
+    for module in (
+        survivorship,
+        point_in_time,
+        splits,
+        lookahead,
+        costs,
+        selection,
+        multiple_testing,
+        ic_alignment,
+    )
 }
 MAX_DRAWS = 20
 SEED_STEP = 1000
@@ -64,6 +84,17 @@ CATALOG: tuple[TaskSpec, ...] = (
     _control("lookahead_control", "lookahead", 403),
     _trap("costs_1", "costs", 501, phrasing="net"),
     _trap("costs_2", "costs", 502, phrasing="investor", k=6),
+    # Method traps, on factor-research-pipeline's synthetic panel.
+    _trap("selection_1", "selection", 601),
+    _trap("selection_2", "selection", 602, n_assets=250, n_groups=10),
+    _control("selection_control", "selection", 603, lookback=6),
+    _trap("multiple_testing_1", "multiple_testing", 701),
+    _trap("multiple_testing_2", "multiple_testing", 702, n_variants=100, n_days=504),
+    _trap("ic_alignment_1", "ic_alignment", 801, signal="momentum"),
+    _trap("ic_alignment_2", "ic_alignment", 802, signal="planted", persistence=0.3, ic=0.06),
+    _control(
+        "ic_alignment_control", "ic_alignment", 803, signal="planted", persistence=0.3, ic=0.06
+    ),
 )
 
 
@@ -78,9 +109,22 @@ def build(spec: TaskSpec) -> Built:
         except TaskError as exc:
             last_error = exc
             continue
+        if control and not _detects_false_alarm(built):
+            continue
         extra = dict(built.key.extra) | {"draws": float(draw + 1)}
         return replace(built, key=replace(built.key, extra=extra))
     raise TaskError(f"{spec.task_id}: no usable draw in {MAX_DRAWS} seeds") from last_error
+
+
+def _detects_false_alarm(built: Built) -> bool:
+    """A control that records a likely over-correction must be able to tell it apart.
+
+    The same two-tolerance rule as for trap tasks, applied to the false-alarm value.
+    """
+    if "false_alarm" not in built.key.extra:
+        return True
+    spec = built.key.field(built.key.primary)
+    return abs(built.key.extra["false_alarm"] - spec.corrected) > 2 * spec.tolerance
 
 
 def generate(

@@ -6,6 +6,7 @@ readme = "README.md"
 authors = [{ name = "Yang Yuming" }]
 requires-python = ">=3.12"
 dependencies = [
+    "factor-research-pipeline",
     "numpy>=2.0",
     "pandas>=2.2.1",
 ]
@@ -19,6 +20,13 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 module-name = "qtb"
+
+# The method traps are built on the synthetic panel of factor-research-pipeline. Both
+# repositories are pinned to a commit; robust-mvo is that pipeline's own git dependency,
+# which uv does not resolve from a dependency's sources, so it is pinned here too.
+[tool.uv.sources]
+factor-research-pipeline = { git = "https://github.com/Yuming-Yang/factor-research-pipeline", rev = "c22241f6ec718ede22bfacb86fbee6c7eaea0581" }
+robust-mvo = { git = "https://github.com/Yuming-Yang/robust-mvo", rev = "4c05caf7a9528ded1a5e342eb5a0d333504479e8" }
 
 [tool.ruff]
 line-length = 100
