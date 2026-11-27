@@ -1,8 +1,8 @@
 """Token cost of runs, from a dated price table.
 
 Prices are USD per million tokens, taken from https://platform.claude.com/docs/en/about-claude/pricing
-on 2026-11-26 (standard API, global routing, 5-minute cache). Check them again before
-approving spend; they change.
+on 2026-11-26 and re-checked on 2026-11-27 (standard API, global routing, 5-minute cache).
+Check them again before approving spend; they change.
 
 Before the pilot, tokens per run can only be assumed. ``scenario_usage`` turns an
 assumed number of steps and tokens per step into the token counts an append-only,
