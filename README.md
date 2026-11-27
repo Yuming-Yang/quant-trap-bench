@@ -100,3 +100,7 @@ A model run (not made here, and paid) needs `uv sync --extra anthropic`, `ANTHRO
 - **A minimal harness instead of a framework.** One Python tool in a temporary directory and a step limit, because the development machine has no Docker. It isolates the task files, not the machine.
 
 More detail, including what was dropped, is in [DECISIONS.md](DECISIONS.md).
+
+## License
+
+MIT. See [LICENSE](LICENSE).
