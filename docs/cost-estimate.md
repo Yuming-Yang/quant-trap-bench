@@ -1,10 +1,10 @@
-# Cost estimate for model runs (milestone 5)
+# Cost estimate for model runs
 
-Written 2026-11-26. **Nothing has been run and nothing has been spent.** This estimate is for the author to approve, change or reject. The SPEC's plan was to measure tokens on a three-task pilot first; the pilot is itself a paid run, so it is part of what needs approval. The token figures below are therefore assumptions, not measurements.
+Written 2026-11-26. **No model has been run on this benchmark.** The token figures below are assumptions, not measurements: the way to replace them is a small paid pilot (see Suggested sequence). Prices change; check them again before any run.
 
 ## Prices
 
-From Anthropic's pricing page (`https://platform.claude.com/docs/en/about-claude/pricing`), checked 2026-11-26. USD per million tokens, standard API, global routing, 5-minute prompt cache. Also in `src/qtb/cost.py`.
+From Anthropic's pricing page (`https://platform.claude.com/docs/en/about-claude/pricing`), checked 2026-11-26 and again on 2026-11-27, unchanged. USD per million tokens, standard API, global routing, 5-minute prompt cache. Also in `src/qtb/cost.py`.
 
 | Model | Input | Cache write | Cache read | Output |
 | --- | --- | --- | --- | --- |
@@ -12,7 +12,7 @@ From Anthropic's pricing page (`https://platform.claude.com/docs/en/about-claude
 | Claude Sonnet 5.5 (`claude-sonnet-5-5`) | 2.00 | 2.50 | 0.10 | 10.00 |
 | Claude Haiku 5.5 (`claude-haiku-5-5`) | 0.10 | 0.125 | 0.01 | 0.50 |
 
-Haiku 5.5's prices are five times higher for any request whose prompt exceeds 100,000 tokens. Only Claude models are listed because only a Claude adapter exists (see "Decisions for the author").
+Haiku 5.5's prices are five times higher for any request whose prompt exceeds 100,000 tokens. Only Claude models are listed because only a Claude adapter exists (see "Choices that change the result or the cost").
 
 ## Formula
 
@@ -28,9 +28,9 @@ Cost per run comes from the harness's loop: every step resends the whole convers
 | Central | 14 | 2,500 | 1,500 | 800 | 30,100 |
 | Heavy | 30 (the step limit) | 2,500 | 3,000 | 1,500 | 128,500 |
 
-## Proposed configurations
+## Example configurations
 
-At least three are required by the SPEC. Proposed, for the author to change:
+The SPEC asked for at least three. An example set:
 
 | ID | Model | Effort | Prompt |
 | --- | --- | --- | --- |
@@ -64,15 +64,15 @@ What could make it higher:
 - **Haiku's long-prompt price** applies to the heavy scenario's late steps, so D's heavy figure is low by up to about 5×; D is small either way.
 - **Retries** of failed requests by the SDK are not counted.
 
-Not included: the secondary, judged score (an LLM reading each written report against the key). With 264 short reports it is a few dollars on Sonnet 5.5; it will be estimated separately before it runs.
+Not included: the secondary, judged score (an LLM reading each written report against the key). With 264 short reports it is a few dollars on Sonnet 5.5; it would need its own estimate.
 
-## Proposed sequence
+## Suggested sequence
 
-1. Approve the pilot: tasks `survivorship_1`, `point_in_time_control` and `selection_1` (one data trap, one control, one method trap), four configurations, one repeat. Expected about 5 USD, at most about 22 USD.
+1. Run a pilot: tasks `survivorship_1`, `point_in_time_control` and `selection_1` (one data trap, one control, one method trap), four configurations, one repeat. Expected about 5 USD, at most about 22 USD.
 2. From the pilot's transcripts, replace the assumed scenario with measured tokens per run and re-price the full run with `qtb.cost.usage_cost`.
-3. Approve the full run with the new figure.
+3. Decide on the full run with the new figure.
 
-Command, once approved (needs `uv sync --extra anthropic` and an API key in the environment):
+Pilot command for configuration A (needs `uv sync --extra anthropic` and an API key in the environment):
 
 ```bash
 uv run qtb run --agent claude --model claude-opus-5-5 --effort high --prompt plain \
@@ -80,9 +80,8 @@ uv run qtb run --agent claude --model claude-opus-5-5 --effort high --prompt pla
   --out runs/pilot --allow-paid
 ```
 
-## Decisions for the author (SPEC decision D5)
+## Choices that change the result or the cost
 
-1. **Which models.** The SPEC's Limitations say results may favour the model family that helped write the tasks. These tasks were written with Claude's help, and the proposal evaluates only Claude models. Adding another family needs a new adapter (a small class with one method) and a price check. Whether to do that is the author's call.
-2. **Budget ceiling** for the full run.
-3. **Repeats.** Three per task gives a rough spread; with 16 trap tasks, per-family figures will still rest on a handful of tasks each.
-4. **Effort.** "high" is proposed for every configuration. Lower effort is cheaper; whether it changes trap detection is itself a possible result.
+1. **Author bias.** Tasks, dictionaries and keys reflect one view of what a careful researcher does; results may favour models whose habits match it. Compare more than one model family. Only a Claude adapter exists today; another family needs a new adapter (a small class with one method) and a price entry in `src/qtb/cost.py`.
+2. **Repeats.** Three per task gives a rough spread; with 16 trap tasks, per-family figures will still rest on a handful of tasks each.
+3. **Effort.** "high" is used for every example configuration. Lower effort is cheaper; whether it changes trap detection is itself a possible result.

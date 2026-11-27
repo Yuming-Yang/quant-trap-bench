@@ -51,7 +51,7 @@ Each run copies a task's public files into a fresh temporary directory and gives
 
 ## Results: benchmark validation
 
-These come from the two scripted reference agents and cost nothing. `uv run qtb check` and `uv run qtb summarize` reproduce them; CI runs the check on every push.
+These come from the two scripted reference agents and cost nothing. `uv run qtb check --tasks tasks` reproduces them, and after the runs in [Reproduce](#reproduce), `uv run qtb summarize runs/naive` and `uv run qtb summarize runs/oracle` print each agent's row; CI runs the check on every push.
 
 | Agent | Trap tasks: corrected | Trap tasks: naive | Controls correct |
 | --- | --- | --- | --- |
@@ -73,7 +73,9 @@ What this shows:
 uv sync
 uv run qtb generate --out tasks   # build every task from its seed
 uv run qtb check --tasks tasks    # naive agent falls for every trap, oracle scores full marks
+uv run qtb run --agent naive --tasks tasks --out runs
 uv run qtb run --agent oracle --tasks tasks --out runs
+uv run qtb summarize runs/naive
 uv run qtb summarize runs/oracle
 uv run pytest
 ```
@@ -84,7 +86,7 @@ A model run (not made here, and paid) needs `uv sync --extra anthropic`, `ANTHRO
 
 - **Synthetic traps are cleaner than real ones.** Each task has one trap, a truthful data dictionary, and a request that defines every statistic. Real data hides problems less politely.
 - **No model results.** The benchmark is validated, but how any model behaves on it is untested here.
-- **Author bias.** The tasks were written with the help of a Claude model. Any later run that evaluates only Claude models should say so.
+- **Author bias.** Tasks, dictionaries and keys reflect one view of what a careful researcher does; results may favour models whose habits match it. Compare more than one model family.
 - **Small task count.** 16 trap tasks and 6 controls; per-family figures rest on a few tasks each.
 - **A numeric score cannot see reasoning.** An agent can reach the corrected value by luck or miss it through an unrelated slip. The "other" category and the transcripts are there to show how often.
 - **The harness is not a sandbox.** It isolates the task files, not the machine.
@@ -98,3 +100,7 @@ A model run (not made here, and paid) needs `uv sync --extra anthropic`, `ANTHRO
 - **A minimal harness instead of a framework.** One Python tool in a temporary directory and a step limit, because the development machine has no Docker. It isolates the task files, not the machine.
 
 More detail, including what was dropped, is in [DECISIONS.md](DECISIONS.md).
+
+## License
+
+MIT. See [LICENSE](LICENSE).

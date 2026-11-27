@@ -1,6 +1,6 @@
 # SPEC: QuantTrapBench
 
-Status: accepted, 2026-11-26. The author accepted the scope and every proposal in the open-decisions table (D1 to D7) as written. D5 (models and budget) stays open until the cost estimate is approved.
+Status: accepted, 2026-11-26. The scope changed the same day: no paid model runs (see Scope change).
 
 ## Problem
 
@@ -122,7 +122,7 @@ A benchmark named ALPHAQT-BENCH was noted in earlier planning as closely related
 
 ## Limitations known in advance
 
-- **Author bias.** If the tasks are written with the help of one model family and the same family is evaluated, results may favour it. The README states which models helped write tasks.
+- **Author bias.** Tasks, dictionaries and keys reflect one view of what a careful researcher does; results may favour models whose habits match it. Compare more than one model family. The README carries the same caveat.
 - **Synthetic traps are cleaner than real ones.** Each task has at most two traps and a truthful data dictionary. Real data hides problems less politely.
 - **Small task count.** With 20 to 30 tasks, per-family results rest on a handful of tasks each.
 - **A numeric score cannot see reasoning.** An agent can reach the corrected value by luck or miss it through an unrelated slip. The "other" category and the transcripts are there to show how often.
